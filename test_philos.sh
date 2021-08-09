@@ -22,7 +22,7 @@ avg=0
 dead=0
 alive=0
 arg=$@
-padding="                         "
+padding="                 "
 
 # trap 'killall philo; exit' SIGINT
 
@@ -34,7 +34,9 @@ for((i=0; i < iter; i++));
 do
 	echo -ne "[`expr $i + 1`]	"
 	output=$(timeout --foreground $waitfor $path/philo $@)
-	printf "% -19.19s " "$(tail -n 1 <<<${output})"
+	line="$(tail -n 1 <<<${output})"
+	# printf "% -19.19s " "$(tail -n 1 <<<${output})"
+	printf "%s %s" "$line" "${padding:${#line}}"
 	if grep -q "died" <<<$(tail -n 5 <<<$output)
 	then
 		echo -e "${LRED}	💀💀💀 Died!${NC}"
