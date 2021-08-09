@@ -7,7 +7,7 @@ iter=50
 waitfor=60
 
 # Path where philo binary is
-path="." 
+path="../philo_talyx" 
 # path="/home/roman/work/2_ecole/github/philosophers/philo"
 
 
@@ -21,26 +21,35 @@ NC="\e[0m"
 avg=0
 dead=0
 alive=0
+arg=$@
+padding="                         "
+
+# trap 'killall philo; exit' SIGINT
+
 printf "Doing ${YELLO}%d${NC} iterations, waiting ${YELLO}%d${NC} seconds...\n" $iter $waitfor
+
 echo -e "<iter>	<ms>	<num>	<msg>		<status>"
+
 for((i=0; i < iter; i++));
 do
 	echo -ne "[`expr $i + 1`]	"
-	output=$(timeout $waitfor $path/philo $@)
-	# echo -ne "$(tail -n 1 <<<${output})"
+	output=$(timeout --foreground $waitfor $path/philo $@)
 	printf "% -19.19s " "$(tail -n 1 <<<${output})"
 	if grep -q "died" <<<$(tail -n 5 <<<$output)
 	then
 		echo -e "${LRED}	💀💀💀 Died!${NC}"
 		((dead++))
+		mkdir -p ./logs_philo
+		printf "%s" "$output" > "./logs_philo/$$-${i}_${arg// /_}.txt"
 	else
 		echo -e "${LGREEN}	🤔🤔🤔 Alive...${NC}"
 		((alive++))
 	fi;
 done
+
 printf "Summary: ${LRED}%d/%d${NC} 💀, ${LGREEN}%d/%d${NC} 🤔\n" $dead $iter $alive $iter
-notif=""
-if [ -x "$(command -v notify-send)" ]
+
+if [[ -x "$(command -v notify-send)" ]] && (( $iter * $waitfor >= 60 )) 
 then
 	printf -v notif "%d/%d died." $dead $iter
 	notify-send "Philo test complete" "$notif"
