@@ -24,7 +24,16 @@ alive=0
 arg=$@
 padding="                 "
 
-# trap 'killall philo; exit' SIGINT
+trap 'rm -rf "$tempdir"; exit' SIGINT
+
+if [ -x "$path"/philo ]
+then
+	tempdir=`mktemp -d`
+	cp "$path"/philo "$tempdir"
+else
+	echo -e "\a Binary error"
+	exit
+fi;
 
 printf "Doing ${YELLO}%d${NC} iterations, waiting ${YELLO}%d${NC} seconds...\n" $iter $waitfor
 
@@ -33,7 +42,7 @@ echo -e "<iter>	<ms>	<num>	<msg>		<status>"
 for((i=0; i < iter; i++));
 do
 	echo -ne "[`expr $i + 1`]	"
-	output=$(timeout --foreground $waitfor $path/philo $@)
+	output=$(timeout --foreground $waitfor $tempdir/philo $@)
 	line="$(tail -n 1 <<<${output})"
 	# printf "% -19.19s " "$(tail -n 1 <<<${output})"
 	printf "%s %s" "$line" "${padding:${#line}}"
@@ -48,6 +57,8 @@ do
 		((alive++))
 	fi;
 done
+
+rm -rf "$tempdir"
 
 printf "Summary: ${LRED}%d/%d${NC} 💀, ${LGREEN}%d/%d${NC} 🤔\n" $dead $iter $alive $iter
 
